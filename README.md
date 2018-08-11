@@ -7,35 +7,25 @@ This image helps you download URL's, verify their content, and cache them so tha
 The idea & name are inspired by [nixpkg](https://nixos.org/nixpkgs/)'s fetchurl function.
 
 ## Usage
-
-You can use this image as shown below:
-
-```Dockerfile
-ARG X_VERSION 1.0
-ARG X_SHA256 8a51c03f1ff77c2b8e76da512070c23c5e69813d5c61732b3025199e5f0c14d5
-
-FROM moretea/fetchurl AS download_x
-RUN fetchurl \
-  --url http://example.com/download/x-${X_VERSION}.tar.gz \
-  --sha256 ${X_SHA256} \
-  --to /x.tar.gz
-
-FROM alpine
-COPY --from=download_x /x /opt/x
-ENTRYPOINT ["/opt/x/bin/x"]
-```
-
-If you want to know what SHA256 an image has, run:
+1. Run `docker run --rm moretea/fetchurl $MY_URL_TO_DOWNLOAD`
+2. Copy & Paste the output in your Dockerfile.
 
 ```
-$ docker run --rm moretea/fetchurl http://example.com/download/x-1.0.tar.gz
+$ docker run --rm moretea/fetchurl http://maarten-hoogendoorn.nl/blog
+Downloading 'http://maarten-hoogendoorn.nl/blog'... Done!
+
+# Add the following snippet to your Dockerfile:
+FROM moretea/fetchurl AS blog_fetcher
+RUN ["fetchurl", \
+    "-url", "http://maarten-hoogendoorn.nl/blog", \
+    "-sha256", "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", \
+    "-to", "/blog"]
+
+# And use in another layer like:
+FROM ...
+...
+COPY --from=blog /blog /blog
 ```
 
-## Example
-Also checkout [Dockerfile.example](./Dockerfile.example), where we download example.com and serve our own copy with Nginx.
-
-
-```
-$ docker build -t example.com -f Dockerfile.example 
-$ docker run --rm -ti -p 8080:80 example.com
-```
+## Serving example.com
+Check [Dockerfile.example](./Dockerfile.example) for an example where we download the content of example.com and serve it with our own nginx instance.

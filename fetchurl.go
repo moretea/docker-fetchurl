@@ -8,52 +8,83 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"os"
+	"regexp"
+	"strings"
+	"text/template"
 )
 
-func main() {
-	var url string
-	var sha256 string
-	var to string
-	var doTest bool
+type Template struct {
+	To     string
+	Name   string
+	Url    string
+	Sha256 string
+}
 
-	flag.StringVar(&url, "url", "", "URL to download")
-	flag.StringVar(&sha256, "sha256", "", "The sha256 of the to-download file")
+const TEMPLATE string = `
+# Add the following snippet to your Dockerfile:
+FROM moretea/fetchurl AS {{.Name}}_fetcher
+RUN ["fetchurl", \
+    "-url", "{{.Url}}", \
+    "-sha256", "{{.Sha256}}", \
+    "-to", "{{.To}}"]
+
+# And use in another layer like:
+FROM ...
+...
+COPY --from={{.Name}} {{.To}} {{.To}}
+`
+
+func main() {
+	var rawURL string
+	var expectedSha256 string
+	var to string
+	var doTemplate bool
+
+	flag.StringVar(&rawURL, "url", "", "URL to download")
+	flag.StringVar(&expectedSha256, "sha256", "", "The sha256 of the to-download file")
 	flag.StringVar(&to, "to", "", "Where to store the end result")
-	flag.BoolVar(&doTest, "test", false, "Ony download, and print the sha256")
+	flag.BoolVar(&doTemplate, "template", false, "Download, compute sha256 and print out usage template")
 	flag.Parse()
 
-	if url == "" {
-		fatal("No URL provided; add --url 'url' to your invocation of fetchurl")
+	if rawURL == "" {
+		fatal("No URL provided; add -url '$URL' to your invocation of fetchurl")
 	}
 
-	if !doTest && to == "" {
-		fatal("No target location is specified; add --to or --test to your invocation of fetchurl")
+	url, err := url.Parse(rawURL)
+	if err != nil {
+		fatal("URL is invalid; %v", err)
 	}
 
-	if !doTest && sha256 == "" {
-		fatal("I can't download unverified files. Please add --sha256 to your invocation of fetchurl.\nNote: you can find the sha256 by running fetchurl --url $MY_URL --test")
+	if !doTemplate && to == "" {
+		fatal("No target location is specified; add -to or -template to your invocation of fetchurl")
+	}
+
+	if !doTemplate && expectedSha256 == "" {
+		fatal("I can't download unverified files. Please add -sha256 to your invocation of fetchurl.\nNote: you can find the sha256 by running fetchurl -url $MY_URL -template")
 	}
 
 	fmt.Printf("Downloading '%s'...", url)
-	fmt.Printf(" Done!\n")
 	file, err := download(url)
-
 	if err != nil {
 		fatal("Could not download file, because: %v\n", err)
 	}
+	fmt.Printf(" Done!\n")
 
 	defer os.Remove(file.Name())
 
-	sha, err := computeSha256(file)
-
+	computedSha256, err := computeSha256(file)
 	if err != nil {
 		fatal("Could not compute SHA256 of the downloaded file, because: %v\n", err)
 	}
 
-	if doTest {
-		fmt.Printf(`fetchurl --url "%s" --sha256 %s`, url, sha)
+	if doTemplate {
+		printTemplate(url, computedSha256)
 	} else {
+		if expectedSha256 != computedSha256 {
+			fatal("Hmm. I expected a sha256 of '%s', but instead computed '%s'", expectedSha256, computedSha256)
+		}
 		err = copyFile(file, to)
 		if err != nil {
 			fatal("Could not rename the downloaded file to %s, because: %v", to, err)
@@ -62,14 +93,47 @@ func main() {
 	}
 }
 
-func download(url string) (file *os.File, err error) {
+func printTemplate(url *url.URL, sha256 string) {
+	to := "/"
+
+	if url.Path == "" {
+		host := strings.Split(url.Host, ":")[0]
+		to += host
+	} else {
+		parts := strings.Split(url.Path, "/")
+		lastPart := parts[len(parts)-1]
+		to += lastPart
+	}
+
+	// Create a name for the fetcher layer;
+	// 1. Remove al non-letter names from the start of the name
+	// 2. Replace all (consecutive) non ascii letters from the name
+	re := regexp.MustCompile("^[^a-z]+")
+	name := re.ReplaceAllString(strings.ToLower(to), "")
+	re = regexp.MustCompile("[^a-z]+")
+	name = re.ReplaceAllString(name, "_")
+
+	dockerfileTemplate := Template{Name: name, Url: url.String(), To: to, Sha256: sha256}
+
+	tmpl, err := template.New("").Parse(TEMPLATE)
+	if err != nil {
+		panic(err)
+	}
+
+	err = tmpl.Execute(os.Stdout, dockerfileTemplate)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func download(url *url.URL) (file *os.File, err error) {
 	file, err = ioutil.TempFile("", "fetchurl")
 	if err != nil {
 		return
 	}
 
 	var resp *http.Response
-	resp, err = http.Get(url)
+	resp, err = http.Get(url.String())
 	if err != nil {
 		return
 	}
