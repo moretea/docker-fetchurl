@@ -24,7 +24,7 @@ type Template struct {
 
 const TEMPLATE string = `
 # Add the following snippet to your Dockerfile:
-FROM moretea/fetchurl AS {{.Name}}_fetcher
+FROM moretea/docker-fetchurl AS {{.Name}}_fetcher
 RUN ["fetchurl", \
     "-url", "{{.Url}}", \
     "-sha256", "{{.Sha256}}", \

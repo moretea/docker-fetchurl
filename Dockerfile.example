@@ -1,4 +1,4 @@
-FROM moretea/fetchurl AS example_fetcher
+FROM moretea/docker-fetchurl AS example_fetcher
 RUN ["fetchurl", \
     "-url", "http://example.com/", \
     "-sha256", "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", \

@@ -1,6 +1,6 @@
 # Fetchurl Docker Image
 
-![Docker Image Size](https://img.shields.io/microbadger/image-size/moretea/docker-fetchurl.svg) ![Docker Build Status](https://img.shields.io/docker/build/moretea/docker-fetchurl.svg)
+<a href="https://hub.docker.com/r/moretea/docker-fetchurl/"><img alt="Image size badge" src="https://img.shields.io/microbadger/image-size/moretea/docker-fetchurl.svg"/> <img alt="Docker Build Status" src="https://img.shields.io/docker/build/moretea/docker-fetchurl.svg"/></a>
 
 _Ever annoyed by all the hoops you have to jump through if you want to download and verify that you downloaded the correct file in a Dockerfile?_
 
@@ -9,15 +9,15 @@ This image helps you download URL's, verify their content, and cache them so tha
 The idea & name are inspired by [nixpkg](https://nixos.org/nixpkgs/)'s fetchurl function.
 
 ## Usage
-1. Run `docker run --rm moretea/fetchurl $MY_URL_TO_DOWNLOAD`
+1. Run `docker run --rm moretea/docker-fetchurl $MY_URL_TO_DOWNLOAD`
 2. Copy & paste the output in your Dockerfile.
 
 ```
-$ docker run --rm moretea/fetchurl http://maarten-hoogendoorn.nl/blog
+$ docker run --rm moretea/docker-fetchurl http://maarten-hoogendoorn.nl/blog
 Downloading 'http://maarten-hoogendoorn.nl/blog'... Done!
 
 # Add the following snippet to your Dockerfile:
-FROM moretea/fetchurl AS blog_fetcher
+FROM moretea/docker-fetchurl AS blog_fetcher
 RUN ["fetchurl", \
     "-url", "http://maarten-hoogendoorn.nl/blog", \
     "-sha256", "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", \
