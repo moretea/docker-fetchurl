@@ -29,3 +29,14 @@ COPY --from=blog /blog /blog
 
 ## Serving example.com
 Check [Dockerfile.example](./Dockerfile.example) for an example where we download the content of example.com and serve it with our own nginx instance.
+
+Build your own example.com enginx container with:
+
+```
+$ docker build -t example.com https://raw.githubusercontent.com/moretea/docker-fetchurl/master/Dockerfile.example
+$ docker run -d -p 8080:80 example.com
+$ curl localhost:8080
+  <html>
+  ....
+  </html>
+```
