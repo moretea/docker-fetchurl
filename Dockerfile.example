@@ -1,8 +1,8 @@
 FROM moretea/fetchurl AS example_fetcher
 RUN ["fetchurl", \
-    "--url", "http://example.com/", \
-    "--sha256", "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", \
-    "--to", "example.html"]
+    "-url", "http://example.com/", \
+    "-sha256", "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", \
+    "-to", "/example.html"]
 
 FROM nginx
 COPY --from=example_fetcher /example.html /usr/share/nginx/html/index.html
