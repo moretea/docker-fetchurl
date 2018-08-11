@@ -1,5 +1,7 @@
 # Fetchurl Docker Image
 
+![Docker Image Size](https://img.shields.io/microbadger/image-size/moretea/docker-fetchurl.svg) ![Docker Build Status](https://img.shields.io/docker/build/moretea/docker-fetchurl.svg)
+
 _Ever annoyed by all the hoops you have to jump through if you want to download and verify that you downloaded the correct file in a Dockerfile?_
 
 This image helps you download URL's, verify their content, and cache them so that you don't have to re-download them all the time!
