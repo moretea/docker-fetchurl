@@ -1,14 +1,14 @@
 # Fetchurl Docker Image
 
-Ever annoyed by the fact that downloading files, and verifying that they are correct, is pretty annoying in Docker?
+_Ever annoyed by all the hoops you have to jump through if you want to download and verify that you downloaded the correct file in a Dockerfile?_
 
-This image helps you download URL's, verify their content, and cache them so that you don't re-download them all the time!
+This image helps you download URL's, verify their content, and cache them so that you don't have to re-download them all the time!
 
 The idea & name are inspired by [nixpkg](https://nixos.org/nixpkgs/)'s fetchurl function.
 
 ## Usage
 1. Run `docker run --rm moretea/fetchurl $MY_URL_TO_DOWNLOAD`
-2. Copy & Paste the output in your Dockerfile.
+2. Copy & paste the output in your Dockerfile.
 
 ```
 $ docker run --rm moretea/fetchurl http://maarten-hoogendoorn.nl/blog
