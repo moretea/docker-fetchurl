@@ -33,7 +33,7 @@ RUN ["fetchurl", \
 # And use in another layer like:
 FROM ...
 ...
-COPY --from={{.Name}} {{.To}} {{.To}}
+COPY --from={{.Name}}_fetcher {{.To}} {{.To}}
 `
 
 func main() {

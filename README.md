@@ -26,7 +26,7 @@ RUN ["fetchurl", \
 # And use in another layer like:
 FROM ...
 ...
-COPY --from=blog /blog /blog
+COPY --from=blog_fetcher /blog /blog
 ```
 
 ## Serving example.com
