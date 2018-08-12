@@ -13,6 +13,8 @@ import (
 	"regexp"
 	"strings"
 	"text/template"
+
+	"github.com/mholt/archiver"
 )
 
 type Template struct {
@@ -20,6 +22,7 @@ type Template struct {
 	Name   string
 	Url    string
 	Sha256 string
+	Unpack bool
 }
 
 const TEMPLATE string = `
@@ -27,7 +30,8 @@ const TEMPLATE string = `
 FROM moretea/docker-fetchurl AS {{.Name}}_fetcher
 RUN ["fetchurl", \
     "-url", "{{.Url}}", \
-    "-sha256", "{{.Sha256}}", \
+    "-sha256", "{{.Sha256}}", \{{if .Unpack}}
+    "-unpack"  \ {{end}}
     "-to", "{{.To}}"]
 
 # And use in another layer like:
@@ -41,11 +45,13 @@ func main() {
 	var expectedSha256 string
 	var to string
 	var doTemplate bool
+	var doUnpack bool
 
 	flag.StringVar(&rawURL, "url", "", "URL to download")
 	flag.StringVar(&expectedSha256, "sha256", "", "The sha256 of the to-download file")
 	flag.StringVar(&to, "to", "", "Where to store the end result")
 	flag.BoolVar(&doTemplate, "template", false, "Download, compute sha256 and print out usage template")
+	flag.BoolVar(&doUnpack, "unpack", false, "Unpack the archive")
 	flag.Parse()
 
 	if rawURL == "" {
@@ -85,11 +91,25 @@ func main() {
 		if expectedSha256 != computedSha256 {
 			fatal("Hmm. I expected a sha256 of '%s', but instead computed '%s'", expectedSha256, computedSha256)
 		}
-		err = copyFile(file, to)
-		if err != nil {
-			fatal("Could not rename the downloaded file to %s, because: %v", to, err)
+
+		if doUnpack {
+			format := archiver.MatchingFormat(file.Name())
+			if format == nil {
+				fatal("Could not unpack the downloaded file; not a supported archive")
+			}
+
+			err = format.Open(file.Name(), to)
+			if err != nil {
+				fatal("Could not unpack the downloaded file; %v", err)
+			}
+
+		} else {
+			err = copyFile(file, to)
+			if err != nil {
+				fatal("Could not rename the downloaded file to %s, because: %v", to, err)
+			}
+			fmt.Printf("Downloaded to %s\n", to)
 		}
-		fmt.Printf("Downloaded to %s\n", to)
 	}
 }
 
@@ -113,7 +133,28 @@ func printTemplate(url *url.URL, sha256 string) {
 	re = regexp.MustCompile("[^a-z]+")
 	name = re.ReplaceAllString(name, "_")
 
-	dockerfileTemplate := Template{Name: name, Url: url.String(), To: to, Sha256: sha256}
+	// Now perform an heuristic check to determine whether or not we should suggest the end user to unpack the file.
+	var archiveSuffixes = []string{
+		".zip",
+		".tar",
+		".tar.gz", ".tgz",
+		".tar.bz2", ".tbz2",
+		".tar.xz", ".txz",
+		".tar.lz4", ".tlz4",
+		".tar.sz", ".tsz",
+		".rar",
+	}
+
+	unpack := false
+
+	for _, archiveSuffix := range archiveSuffixes {
+		if strings.HasSuffix(to, archiveSuffix) {
+			unpack = true
+			break
+		}
+	}
+
+	dockerfileTemplate := Template{Name: name, Url: url.String(), To: to, Sha256: sha256, Unpack: unpack}
 
 	tmpl, err := template.New("").Parse(TEMPLATE)
 	if err != nil {
