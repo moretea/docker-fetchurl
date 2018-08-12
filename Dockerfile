@@ -18,4 +18,4 @@ ADD ./tmp /tmp
 COPY --from=builder /go/bin/fetchurl /bin/fetchurl
 COPY --from=builder /etc/ssl/certs /etc/ssl/certs
 
-ENTRYPOINT ["/bin/fetchurl", "-template", "-url"]
+ENTRYPOINT ["/bin/fetchurl"]
