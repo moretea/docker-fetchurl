@@ -4,12 +4,12 @@
 
 _Ever annoyed by all the hoops you have to jump through if you want to download and verify that you downloaded the correct file in a Dockerfile?_
 
-This image helps you download URL's, verify their content, and cache them so that you don't have to re-download them all the time!
+This image helps you download URL's, verify their content, unpack them if they are an archive, and cache them so that you don't have to re-download them all the time!
 
 The idea & name are inspired by [nixpkg](https://nixos.org/nixpkgs/)'s fetchurl function.
 
-## Usage
-1. Run `docker run --rm moretea/docker-fetchurl $MY_URL_TO_DOWNLOAD`
+## Quick start
+1. Run `docker run --rm moretea/docker-fetchurl -template -url $MY_URL_TO_DOWNLOAD`
 2. Copy & paste the output in your Dockerfile.
 
 ```
@@ -27,6 +27,23 @@ RUN ["fetchurl", \
 FROM ...
 ...
 COPY --from=blog_fetcher /blog /blog
+```
+
+## Usage
+
+```
+$ docker run moretea/docker-fetchurl --help
+Usage of /bin/fetchurl:
+  -sha256 string
+    	The sha256 of the to-download file
+  -template
+    	Download, compute sha256 and print out usage template
+  -to string
+    	Where to store the end result
+  -unpack
+    	Unpack the archive
+  -url string
+    	URL to download
 ```
 
 ## Serving example.com
