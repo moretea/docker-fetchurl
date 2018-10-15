@@ -5,13 +5,15 @@ RUN apk add ca-certificates git
 RUN go get -u golang.org/x/vgo
 WORKDIR /go/src/github.com/moretea/docker-fetchurl
 
+ENV GO111MODULE=on
+
 # Populate the module cache based on the go.{mod,sum} files.
 COPY go.mod .
 COPY go.sum .
-RUN vgo list -e $(vgo list -f '{{.Path}}' -m all)
+RUN go mod download
 
 COPY . .
-RUN GOOS=linux GARCH=amd64 CGO_ENABLED=0 vgo install -a -installsuffix cgo ./cmd/fetchurl
+RUN GOOS=linux GARCH=amd64 CGO_ENABLED=0 go install -a -installsuffix cgo ./cmd/fetchurl
 
 FROM scratch
 ADD ./tmp /tmp
