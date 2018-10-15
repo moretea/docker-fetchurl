@@ -31,7 +31,7 @@ FROM moretea/docker-fetchurl AS {{.Name}}_fetcher
 RUN ["fetchurl", \
     "-url", "{{.Url}}", \
     "-sha256", "{{.Sha256}}", \{{if .Unpack}}
-    "-unpack"  \ {{end}}
+    "-unpack",  \ {{end}}
     "-to", "{{.To}}"]
 
 # And use in another layer like:
